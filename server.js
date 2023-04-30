@@ -38,8 +38,27 @@ app.get("/write", (req, res) => {
 // /add로 post 요청 하면...
 app.post("/add", function (req, res) {
     res.send("전송완료");
-    db.collection("post").insertOne(req.body, (err, result) => {
-        console.log(err || result);
+    db.collection("counter").findOne({ name: "게시물갯수" }, (err, result) => {
+        const { totalPost } = result;
+        const data = {
+            _id: totalPost,
+            title: req.body.title,
+            date: req.body.date,
+        };
+        db.collection("post").insertOne(data, (err, result) => {
+            console.log(err || result);
+            // 하나는 updateOne, 여러 개는 updateMany 수정 값은 operater($set) 써야 함.
+            // set: 아예 바꿔주세요 연산자
+            // inc: 증가시켜주세요
+            db.collection("counter").updateOne(
+                { name: "게시물갯수" },
+                // { $set: { totalPost: totalPost + 1 } },
+                { $inc: { totalPost: 1 } },
+                (err, result) => {
+                    console.log(err || result);
+                }
+            );
+        });
     });
 });
 /*
@@ -64,4 +83,16 @@ app.get("/list", (req, res) => {
             console.log(err || result);
             res.render("list.ejs", { posts: result });
         });
+});
+
+app.delete("/delete", (req, res) => {
+    // parseInt로 하던 숫자로 변환해야 됨.
+    console.log(req.body);
+    const _id = +req.body._id;
+    db.collection("post").deleteOne({ _id }, (err, result) => {
+        console.log(err || result);
+        //이렇게만 하면 삭제만 돼서 목록은 그대로 남아 있음.
+        //성공인지 실패인지 알려줘야 함.
+        res.status(400).send({ message: "성공했습니다." });
+    });
 });

@@ -11,14 +11,44 @@
         <ul>
             <li>Home</li>
             <li>Write</li>
+            <li>List</li>
         </ul>
     </header>
 <!-- ejs; 템플릿 엔진으로 서버데이터 집어넣을 수 있음.-->
     <% for (var i = 0; i < posts.length; i++) { %>
-        <% if (posts[i].title) { %>
+        <% if (!posts[i].title) continue; %>
+        <li>
             <h4>할 일 : <%= posts[i].title %></h4>
+            <button class="delete" data-id="<%= posts[i]._id %>">삭제</button>
             <p>마감 : <%= posts[i].date %></p>
-        <% } %>
+        </li>
     <% } %>
 </body>
 </html>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script>
+    $('.delete').click(function(e) {
+        // const _id = $('.delete').dataId;
+        const _id = e.target.dataset.id;
+        //this는 이벤트 누른 거를 의미함.
+        // 화살표 함수 사용하면 this가 윈도우에 매핑됨.어떻게 해야 할까?
+        const $button = $(this); 
+        $.ajax({
+            method: "DELETE",
+            url: '/delete',
+            // 숫자로 보내도 문자로 알아서 치환됨.
+            // data: { _id : 1}
+            //내가 누른 버튼에 해당되는 아이디값.
+            data: { _id }
+        }).done((result) => {
+            //ajax요청이 성공했을 때 실행할 코드
+            console.log("성공했어유");
+            //부모 요소 중 li가 있으면 서서히 사라지게
+            console.dir($button);
+            $button.parent('li').fadeOut();
+        }).fail((xhr, textStatus, errorThrown) => {
+            //실패했을 떄 status 400
+            console.log(xhr, textStatus, errorThrown);             
+        })
+    })
+</script>
