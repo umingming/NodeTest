@@ -4,6 +4,9 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
+const methodOverride = require("method-override");
+app.use(methodOverride);
+
 const MongoClient = require("mongodb").MongoClient;
 var db;
 MongoClient.connect(
@@ -104,4 +107,24 @@ app.get("/detail/:id", (req, res) => {
         console.log(err || result);
         res.render("detail.ejs", { data: result });
     });
+});
+
+app.get("/edit/:id", (req, res) => {
+    //params는 기본적으로 문자
+    db.collection("post").findOne({ _id: +req.params.id }, (err, result) => {
+        console.log(err || result);
+        res.render("edit.ejs", { data: result });
+    });
+});
+
+app.post("/edit/:id", function (req, res) {
+    console.log(req);
+    db.collection("post").updateOne(
+        { _id: +req.params.id },
+        { $set: { title: req.body.title, date: req.body.date } },
+        (err, result) => {
+            console.log(err || result);
+            res.send("전송완료");
+        }
+    );
 });

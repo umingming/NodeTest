@@ -7,19 +7,14 @@
     <title>Document</title>
 </head>
 <body>
-    <header>
-        <ul>
-            <li>Home</li>
-            <li>Write</li>
-            <li>List</li>
-        </ul>
-    </header>
+    <%- include("nav.html") %>
 <!-- ejs; 템플릿 엔진으로 서버데이터 집어넣을 수 있음.-->
     <% for (var i = 0; i < posts.length; i++) { %>
         <% if (!posts[i].title) continue; %>
         <li>
             <h4>할 일 : <%= posts[i].title %></h4>
             <button class="delete" data-id="<%= posts[i]._id %>">삭제</button>
+            <button class="edit" data-id="<%= posts[i]._id %>">수정</button>
             <p>마감 : <%= posts[i].date %></p>
         </li>
     <% } %>
@@ -48,6 +43,19 @@
             $button.parent('li').fadeOut();
         }).fail((xhr, textStatus, errorThrown) => {
             //실패했을 떄 status 400
+            console.log(xhr, textStatus, errorThrown);             
+        })
+    })
+    $('.edit').click(function(e) {
+        const _id = e.target.dataset.id;
+        const $button = $(this); 
+        $.ajax({
+            method: "GET",
+            url: `/edit/${_id}`,
+            data: { _id }
+        }).done((result) => {
+            console.log("성공했어유");
+        }).fail((xhr, textStatus, errorThrown) => {
             console.log(xhr, textStatus, errorThrown);             
         })
     })

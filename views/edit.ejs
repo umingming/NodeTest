@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <%- include("nav.html") %>
+    <h4>수정하기</h4>
+    <!-- put을 쓰려면 method-override 다운 받아야 함. -->
+    <form action="/edit/<%= data._id %>" method="POST">
+        <!-- div내에 안 넣으면 body 인식 안 되는 듯. -->
+        <label>할 일</label>
+        <input type="text" name="title" value="<%= data.title %>">
+        <label>마감</label>
+        <input type="text" name="date" value="<%= data.date %>">
+        <button type="submit">제출</button>
+    </form>
+</body>
+</html>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script>
+</script>
