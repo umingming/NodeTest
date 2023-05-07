@@ -93,6 +93,15 @@ app.delete("/delete", (req, res) => {
         console.log(err || result);
         //이렇게만 하면 삭제만 돼서 목록은 그대로 남아 있음.
         //성공인지 실패인지 알려줘야 함.
-        res.status(400).send({ message: "성공했습니다." });
+        res.status(200).send({ message: "성공했습니다." });
+    });
+});
+
+// detail 접속 시 보여줌. :이란 기호를 붙이면 이걸 인자로 보내줌.
+app.get("/detail/:id", (req, res) => {
+    //url 파라미터 중 id 값 얻기: req.params.id string으로 되므로 형변환 해주기
+    db.collection("post").findOne({ _id: +req.params.id }, (err, result) => {
+        console.log(err || result);
+        res.render("detail.ejs", { data: result });
     });
 });
