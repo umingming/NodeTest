@@ -222,5 +222,22 @@ passport.serializeUser((user, done) => {
 
 //나중에 호출 됨. 마이페이지 접속할 때
 passport.deserializeUser((id, done) => {
-    done(null, {});
+    db.collection("login").findOne({ id: id }, (err, result) => {
+        done(null, result);
+    });
 });
+
+//미들웨더는 가운데에 넣으면 됨.
+app.get("/mypage", isLoggedin, (req, res) => {
+    //짱신기....
+    const { user } = req;
+    res.render("mypage.ejs", { user });
+});
+
+function isLoggedin(req, res, next) {
+    if (req.user) {
+        next();
+    } else {
+        res.send("로그인 안 하셨는데요?");
+    }
+}
