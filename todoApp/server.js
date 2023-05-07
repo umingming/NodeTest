@@ -1,11 +1,10 @@
 const express = require("express");
 const app = express();
 //HTML 데이터를 해석할 수 있음.
-app.use(express.urlencoded({ extended: true }));
-app.set("view engine", "ejs");
-
 const methodOverride = require("method-override");
-app.use(methodOverride);
+app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride("_method"));
+app.set("view engine", "ejs");
 
 const MongoClient = require("mongodb").MongoClient;
 var db;
@@ -127,4 +126,101 @@ app.post("/edit/:id", function (req, res) {
             res.send("전송완료");
         }
     );
+});
+app.put("/edit/:id", (req, res) => {
+    console.log(req);
+    db.collection("post").updateOne(
+        { _id: +req.params.id },
+        { $set: { title: req.body.title, date: req.body.date } },
+        (err, result) => {
+            console.log(err || result);
+            //목록으로 가서 수정된 거 확인
+            res.redirect("/list");
+        }
+    );
+});
+
+/*
+    회원 인증
+    1. session-based
+        1) 로그인 하면 서버에서 쿠키를 보내줌.
+        2) 브라우저는 쿠키를 저장
+        - 사용자가 로그인했다는 정보를 서버에 다 저장함.
+    2. token-based; JWT
+        1) 로그인하면 서버에서 웹 토근 발행(json web token, 긴 문자열)
+        2) 브라우저는 토큰을 저장
+        - 웹토큰을 헤더에 전송을 해서 서버는 토큰을 검증함.
+        - 사용자의 로그인 상태를 저장할 필요 없음.
+    3. OAuth 사용자의 프로필 정보를 가져 옴.
+        1) 로그인하면, 사이트의 팝업이 뜸.
+        2) 소셜 아이디를 통해 서버에 정송해서 서버에서 토큰이나 뭐나 발행함.
+        - 서버는 비밀번호를 다룰 필요 없음.
+*/
+/*
+    - 세션 방식 로그인 구현
+    1. 라이브러리 설치; passport, passport-local, express-session
+*/
+
+const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
+const session = require("express-session");
+// 세션만들때 비밀 코드를 secret에 입력
+app.use(session({ secret: "1234", resave: true, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get("/login", (req, resp) => {
+    resp.render("login.ejs");
+});
+
+//
+app.post(
+    "/login",
+    passport.authenticate("local", {
+        //로그인 실패하면 이 경로로 이동시켜줘
+        failureRedirect: "/fail",
+    }),
+    (req, resp) => {
+        resp.redirect("/");
+    }
+);
+
+passport.use(
+    new LocalStrategy(
+        {
+            usernameField: "id",
+            passwordField: "pw",
+            session: true,
+            passReqToCallback: false,
+        },
+        (id, pw, done) => {
+            db.collection("login").findOne({ id: id }, (err, result) => {
+                if (err) {
+                    // done(서버에러, 성공사용자 데이터, )
+                    return done(err);
+                }
+                if (!result) {
+                    return done(null, false, {
+                        message: "존재하지 않는 아이디",
+                    });
+                }
+                if (id === result.pw) {
+                    //serializeUser의 USER 인자에 들어감.
+                    return done(null, result);
+                } else {
+                    return done(null, false, { message: "비번 틀림." });
+                }
+            });
+        }
+    )
+);
+
+//세선 저장 로그인 성공시
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+//나중에 호출 됨. 마이페이지 접속할 때
+passport.deserializeUser((id, done) => {
+    done(null, {});
 });

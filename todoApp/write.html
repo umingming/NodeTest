@@ -16,10 +16,14 @@
     </header>
     <form action="/add" method="POST">
         <!-- div내에 안 넣으면 body 인식 안 되는 듯. -->
-        <label>할 일</label>
-        <input type="text" name="title">
-        <label>마감</label>
-        <input type="text" name="date">
+        <div>
+            <label>할 일</label>
+            <input type="text" name="title">
+        </div>
+        <div>
+            <label>마감</label>
+            <input type="text" name="date">
+        </div>
         <button type="submit">제출</button>
     </form>
 </body>
