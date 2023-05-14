@@ -5,26 +5,24 @@ const methodOverride = require("method-override");
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.set("view engine", "ejs");
+require("dotenv").config();
 
 const MongoClient = require("mongodb").MongoClient;
 var db;
-MongoClient.connect(
-    "mongodb+srv://u13040035:java1234@cluster0.rrl2jwu.mongodb.net/?retryWrites=true&w=majority",
-    function (err, client) {
-        //node server.js 로 서버 켰을 떄, 해당 콘솔 띄워줌.
-        if (err) return console.log(err);
-        db = client.db("todoapp");
-        db.collection("post").insertOne(
-            { 이름: "John", 나이: 20 },
-            (err, result) => {
-                console.log(err || result);
-            }
-        );
-        app.listen(8080, () => {
-            console.log(client);
-        });
-    }
-);
+MongoClient.connect(process.env.DB_URL, function (err, client) {
+    //node server.js 로 서버 켰을 떄, 해당 콘솔 띄워줌.
+    if (err) return console.log(err);
+    db = client.db("todoapp");
+    db.collection("post").insertOne(
+        { 이름: "John", 나이: 20 },
+        (err, result) => {
+            console.log(err || result);
+        }
+    );
+    app.listen(process.env.PORT, () => {
+        console.log(client);
+    });
+});
 
 // 누군가가 /pet path 입력하면 해당 안내문을 띄워줌.
 app.get("/pet", (req, res) => {
@@ -204,10 +202,12 @@ passport.use(
                         message: "존재하지 않는 아이디",
                     });
                 }
-                if (id === result.pw) {
+                if (pw === result.pw) {
+                    console.log("로그인 성공");
                     //serializeUser의 USER 인자에 들어감.
                     return done(null, result);
                 } else {
+                    console.log("로그인 실패", result);
                     return done(null, false, { message: "비번 틀림." });
                 }
             });
@@ -229,11 +229,12 @@ passport.deserializeUser((id, done) => {
 
 //미들웨더는 가운데에 넣으면 됨.
 app.get("/mypage", isLoggedin, (req, res) => {
-    //짱신기....
+    //짱신기.... DeserializeUser로 찾은 정보
     const { user } = req;
     res.render("mypage.ejs", { user });
 });
 
+//마이페이지 접속 전 실행할 미들웨어
 function isLoggedin(req, res, next) {
     if (req.user) {
         next();
@@ -241,3 +242,14 @@ function isLoggedin(req, res, next) {
         res.send("로그인 안 하셨는데요?");
     }
 }
+
+app.get("/search", (req, res) => {
+    //입력한 검색어 꺼내서 쓸 수 있음
+    const { value } = req.query;
+    db.collection("post")
+        .find({ title: value })
+        .toArray((err, result) => {
+            console.log(err || result);
+            res.render("list.ejs", { posts: result });
+        });
+});

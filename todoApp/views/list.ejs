@@ -9,6 +9,10 @@
 <body>
     <%- include("nav.html") %>
 <!-- ejs; 템플릿 엔진으로 서버데이터 집어넣을 수 있음.-->
+    <div>
+        <input id="search-input">
+        <button id="search-button">검색</button>
+    </div>
     <% for (var i = 0; i < posts.length; i++) { %>
         <% if (!posts[i].title) continue; %>
         <li>
@@ -58,5 +62,11 @@
         }).fail((xhr, textStatus, errorThrown) => {
             console.log(xhr, textStatus, errorThrown);             
         })
+    })
+    $('#search-button').click((e) => {
+        //get이랑 똑같음. 서버 url 변경
+        // const {value} = document.querySelector("#search-input");
+        const value = $("#search-input").val();
+        window.location.replace(`/search?value=${value}`);
     })
 </script>
