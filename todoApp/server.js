@@ -246,10 +246,63 @@ function isLoggedin(req, res, next) {
 app.get("/search", (req, res) => {
     //입력한 검색어 꺼내서 쓸 수 있음
     const { value } = req.query;
+    // db.collection("post")
+    //     .find({ $text: { $search: value } }) //인덱스 있어야 함. 대신 한글 호환성 떨어짐.
+    //     .toArray((err, result) => {
+    //         console.log(err || result);
+    //         res.render("list.ejs", { posts: result });
+    //     });
+    const conditions = [
+        {
+            $search: {
+                index: "titleSearch",
+                text: {
+                    query: value, //검색어
+                    path: "title", //컬렉션 중 어떤 항목인지, 여러 개 동시에 찾고 싶으면 ['title', 'date'] 와 같이 배열 사용
+                },
+            },
+        },
+        //정렬
+        {
+            $sort: { date: -1 },
+        },
+        //제한
+        {
+            $limit: 10,
+        },
+        //검색 조건 필터
+        {
+            $project: {
+                title: 1,
+                _id: 0, //안 가져 옴
+                score: {
+                    $meta: "searchScore", //얼마나 관련 있는지
+                },
+            },
+        },
+    ];
     db.collection("post")
-        .find({ title: value })
+        .aggregate(conditions) //searchIndex사용하기 위한 메소드
         .toArray((err, result) => {
             console.log(err || result);
             res.render("list.ejs", { posts: result });
         });
 });
+
+app.post(
+    "/register", //passport 세팅이 위에 위치해야 함.
+    (req, resp) => {
+        const { id, pw } = req.body;
+        db.collection("login").findOne({ id }, (err, result) => {
+            console.log(err || result);
+            if (!result) {
+                db.collection("login").insertOne({ id, pw }, (err, result) => {
+                    console.log(err || result);
+                    resp.redirect("/");
+                });
+            } else {
+                resp.send("존재하는 아이디입니다.");
+            }
+        });
+    }
+);
