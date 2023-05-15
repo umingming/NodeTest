@@ -5,13 +5,18 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        li {
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <header>
         <ul>
-            <li>Home</li>
-            <li>Write</li>
-            <li>List</li>
+            <li id="home">Home</li>
+            <li id="write">Write</li>
+            <li id="list">List</li>
         </ul>
     </header>
     <form action="/add" method="POST">
@@ -28,3 +33,15 @@
     </form>
 </body>
 </html>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script>
+    $('#home').click((e) => {
+        window.location.replace('/');
+    })
+    $('#write').click((e) => {
+        window.location.replace('/write');
+    })
+    $('#list').click((e) => {
+        window.location.replace('/list');
+    })
+</script>

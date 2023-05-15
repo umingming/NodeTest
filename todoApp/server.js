@@ -29,37 +29,8 @@ app.get("/pet", (req, res) => {
     res.send("펫용품");
 });
 // /하나만 쓰면 홈임.
-app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/index.html");
-});
 app.get("/write", (req, res) => {
     res.sendFile(__dirname + "/write.html");
-});
-// /add로 post 요청 하면...
-app.post("/add", function (req, res) {
-    res.send("전송완료");
-    db.collection("counter").findOne({ name: "게시물갯수" }, (err, result) => {
-        const { totalPost } = result;
-        const data = {
-            _id: totalPost,
-            title: req.body.title,
-            date: req.body.date,
-        };
-        db.collection("post").insertOne(data, (err, result) => {
-            console.log(err || result);
-            // 하나는 updateOne, 여러 개는 updateMany 수정 값은 operater($set) 써야 함.
-            // set: 아예 바꿔주세요 연산자
-            // inc: 증가시켜주세요
-            db.collection("counter").updateOne(
-                { name: "게시물갯수" },
-                // { $set: { totalPost: totalPost + 1 } },
-                { $inc: { totalPost: 1 } },
-                (err, result) => {
-                    console.log(err || result);
-                }
-            );
-        });
-    });
 });
 /*
     restAPI란? 
@@ -83,18 +54,6 @@ app.get("/list", (req, res) => {
             console.log(err || result);
             res.render("list.ejs", { posts: result });
         });
-});
-
-app.delete("/delete", (req, res) => {
-    // parseInt로 하던 숫자로 변환해야 됨.
-    console.log(req.body);
-    const _id = +req.body._id;
-    db.collection("post").deleteOne({ _id }, (err, result) => {
-        console.log(err || result);
-        //이렇게만 하면 삭제만 돼서 목록은 그대로 남아 있음.
-        //성공인지 실패인지 알려줘야 함.
-        res.status(200).send({ message: "성공했습니다." });
-    });
 });
 
 // detail 접속 시 보여줌. :이란 기호를 붙이면 이걸 인자로 보내줌.
@@ -306,3 +265,64 @@ app.post(
         });
     }
 );
+
+// /add로 post 요청 하면...
+app.post("/add", function (req, res) {
+    res.send("전송완료");
+    db.collection("counter").findOne({ name: "게시물갯수" }, (err, result) => {
+        const { totalPost } = result;
+        const data = {
+            _id: totalPost,
+            title: req.body.title,
+            date: req.body.date,
+            user_id: req.user._id, //req.user로 유저 정보 접근할 수 있음. passport 밑으로 내려야 할 수 있음.
+            //작성자 이름 같은 부가 정보 다 넣어도 됨.
+        };
+        db.collection("post").insertOne(data, (err, result) => {
+            console.log(err || result);
+            // 하나는 updateOne, 여러 개는 updateMany 수정 값은 operater($set) 써야 함.
+            // set: 아예 바꿔주세요 연산자
+            // inc: 증가시켜주세요
+            db.collection("counter").updateOne(
+                { name: "게시물갯수" },
+                // { $set: { totalPost: totalPost + 1 } },
+                { $inc: { totalPost: 1 } },
+                (err, result) => {
+                    console.log(err || result);
+                }
+            );
+        });
+    });
+});
+
+app.delete("/delete", (req, res) => {
+    // parseInt로 하던 숫자로 변환해야 됨.
+    console.log(req.body);
+    const _id = +req.body._id;
+    const user_id = req.user._id;
+    db.collection("post").deleteOne({ _id, user_id }, (err, result) => {
+        console.log(err || result);
+        //이렇게만 하면 삭제만 돼서 목록은 그대로 남아 있음.
+        //성공인지 실패인지 알려줘야 함.
+        res.status(200).send({ message: "성공했습니다." });
+    });
+});
+
+// app.use("/", require("./routes/shop")); //app.use는 미들웨어 사용을 위한 것
+app.use("/shop", require("./routes/shop")); //app.use는 미들웨어 사용을 위한 것
+app.use("/board", require("./routes/board")); //app.use는 미들웨어 사용을 위한 것
+
+app.get("/", (req, res) => {
+    if (req.user) {
+        res.sendFile(__dirname + "/index.html");
+    } else {
+        res.render("login.ejs");
+    }
+});
+app.get("/register", (req, res) => {
+    if (req.user) {
+        res.redirect("/");
+    } else {
+        res.render("register.ejs");
+    }
+});
