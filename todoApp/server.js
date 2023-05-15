@@ -326,3 +326,7 @@ app.get("/register", (req, res) => {
         res.render("register.ejs");
     }
 });
+
+app.get("/fail", (req, res) => {
+    res.render("fail.ejs");
+});
