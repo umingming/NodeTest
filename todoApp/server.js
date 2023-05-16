@@ -10,17 +10,16 @@ require("dotenv").config();
 const MongoClient = require("mongodb").MongoClient;
 var db;
 MongoClient.connect(process.env.DB_URL, function (err, client) {
-    //node server.js 로 서버 켰을 떄, 해당 콘솔 띄워줌.
     if (err) return console.log(err);
+
     db = client.db("todoapp");
-    db.collection("post").insertOne(
-        { 이름: "John", 나이: 20 },
-        (err, result) => {
-            console.log(err || result);
-        }
-    );
+    console.log("Connected to database");
+
+    const loginRouter = require("./routes/login");
+    app.use("/", loginRouter);
+
     app.listen(process.env.PORT, () => {
-        console.log(client);
+        console.log("Server is running on port", process.env.PORT);
     });
 });
 
@@ -121,26 +120,12 @@ app.put("/edit/:id", (req, res) => {
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const session = require("express-session");
+const flash = require("express-flash");
 // 세션만들때 비밀 코드를 secret에 입력
 app.use(session({ secret: "1234", resave: true, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
-
-app.get("/login", (req, resp) => {
-    resp.render("login.ejs");
-});
-
-//
-app.post(
-    "/login",
-    passport.authenticate("local", {
-        //로그인 실패하면 이 경로로 이동시켜줘
-        failureRedirect: "/fail",
-    }),
-    (req, resp) => {
-        resp.redirect("/");
-    }
-);
+app.use(flash());
 
 passport.use(
     new LocalStrategy(
@@ -152,23 +137,20 @@ passport.use(
         },
         (id, pw, done) => {
             db.collection("login").findOne({ id: id }, (err, result) => {
-                if (err) {
-                    // done(서버에러, 성공사용자 데이터, )
-                    return done(err);
-                }
+                if (err) return done(err);
+
                 if (!result) {
-                    return done(null, false, {
-                        message: "존재하지 않는 아이디",
-                    });
+                    const message = "유효하지 않은 아이디";
+                    console.log("로그인 실패:", message);
+                    return done(null, false, { message });
+                } else if (pw !== result.pw) {
+                    const message = "유효하지 않은 비밀번호";
+                    console.log("로그인 실패:", message);
+                    return done(null, false, { message });
                 }
-                if (pw === result.pw) {
-                    console.log("로그인 성공");
-                    //serializeUser의 USER 인자에 들어감.
-                    return done(null, result);
-                } else {
-                    console.log("로그인 실패", result);
-                    return done(null, false, { message: "비번 틀림." });
-                }
+
+                console.log("로그인 성공");
+                return done(null, result);
             });
         }
     )
@@ -328,5 +310,6 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/fail", (req, res) => {
-    res.render("fail.ejs");
+    const message = req.flash("error")[0];
+    res.render("fail.ejs", { message });
 });
