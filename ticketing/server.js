@@ -41,6 +41,9 @@ const puppeteer = require('puppeteer');
         visible: true,
     });
     await popupPage.focus('#main_view_top > #main_view > canvas:last-child');
-    const elem = await popupPage.$('#main_view_top > #main_view > canvas:last-child');
-    console.log(typeof elem);
+    const elemHandle = await popupPage.$('#main_view_top > #main_view > canvas:last-child');
+    if (elemHandle) {
+        const elem = await elemHandle.toElement("canvas")
+        console.dir(elem);
+    }
 })();
