@@ -29,21 +29,43 @@ const puppeteer = require('puppeteer');
     });
     await popupPage.click('.first .btn.btn_reserve');
     await popupPage.keyboard.press('Enter');
-    await popupPage.waitForSelector('#seat_grade_88218', {
+    await popupPage.waitForSelector('#select_seat_grade li:nth-child(9)', {
         visible: true,
     });
-    await popupPage.click('#seat_grade_88218');
-    await popupPage.waitForSelector('#seat_zone_110014', {
+    await popupPage.click('#select_seat_grade li:nth-child(9)');
+    await popupPage.waitForSelector('#select_seat_grade li:nth-child(9) .seat_zone', {
         visible: true,
     });
-    await popupPage.click('#seat_zone_110014');
+    await popupPage.click('#select_seat_grade li:nth-child(9) .seat_zone li:nth-child(3)');
     await popupPage.waitForSelector('#main_view_top > #main_view > canvas:last-child', {
         visible: true,
     });
-    await popupPage.focus('#main_view_top > #main_view > canvas:last-child');
-    const elemHandle = await popupPage.$('#main_view_top > #main_view > canvas:last-child');
-    if (elemHandle) {
-        const elem = await elemHandle.toElement("canvas")
-        console.dir(elem);
+    const elem = await popupPage.$('#main_view_top > #main_view > canvas:last-child');
+    if (elem) {
+        const rect = await popupPage.evaluate(el => {
+            const { top, left, width, height } = el.getBoundingClientRect();
+            return { top, left, width, height };
+        }, elem);
+        async function onclick(rect) {
+            for (let i = rect.left + rect.width / 4; i < rect.width / 2; i++) {
+                for (let j = rect.top + rect.height / 2; j < rect.height; j++) {
+                    await popupPage.mouse.click(i, j);
+                    const seat = await popupPage.$('.reserve_right > .reserve_btn > .btn.btn_full');
+                    if (seat) {
+                        return;
+                    }
+                }
+            }
+        }
+        await onclick(rect);
+        await popupPage.click('.reserve_right > .reserve_btn > .btn.btn_full');
+        // await popupPage.waitForSelector('.selectbox:first-child', {
+        //     visible: true,
+        // });
+        // await popupPage.click('.selectbox:first-child');
+        // await popupPage.waitForSelector('.selectbox:first-child .select_list li:nth-child(2)', {
+        //     visible: true,
+        // });
+        // await popupPage.click('.selectbox:first-child .select_list li:nth-child(2)');
     }
 })();
