@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 //시간 지정(month - 1)
-const targetTime = new Date(2024, 00, 07, 17, 17);
+const targetTime = new Date(2024, 00, 07, 23, 25);
 
 (async () => {
     const browser = await puppeteer.launch({headless: false});
@@ -16,32 +16,30 @@ const targetTime = new Date(2024, 00, 07, 17, 17);
      * @param {String} selector 
      * @param {Number} delay ms 
      */
-    async function clickAfterRender(targetPage, selector, delay = 0) {
+    async function clickAfterRender(targetPage, selector) {
         try {
-            await targetPage.waitForSelector(selector, { visible: true });
+            //timeout 설정 안 하면 30초 제한 걸림.
+            await targetPage.waitForSelector(selector, { visible: true, timeout: 3000000 });
             const target = await targetPage.$(selector);
-            console.log(target, selector, delay);
             if (!target) {
-                await clickAfterRender(targetPage, selector);
-                return;
+                return await clickAfterRender(targetPage, selector)
             }
-
-            setTimeout(async () => {
-                await targetPage.click(selector);
-            }, delay)
+            await targetPage.keyboard.press('Enter');
+            await target.click();
+            return true;
         } catch (error) {
-            console.log(error);
-            await clickAfterRender(targetPage, selector);
+            console.log(selector, error);
+            return false;
         }
     } 
 
     //예매 버튼 대기
     const ticketBtn = ".header-wrap .ic-ticket-24";
-    const remainingTime = Math.max(targetTime.getTime() - Date.now(), 1); 
-    await clickAfterRender(page, ticketBtn, remainingTime);
-
+    const remainingTime = Math.max(targetTime.getTime() - Date.now(), 1000); 
+    new Promise(() => setTimeout(async () => await clickAfterRender(page, ticketBtn), remainingTime));
+    
     //리스트에서 몇 번째 경기인지 선택
-    const popupBtn = ".reserve-list li:nth-child(4) button";
+    const popupBtn = ".reserve-list li:nth-child(8) button";
     await clickAfterRender(page, popupBtn);
     
     //popUp 페이지
@@ -58,14 +56,24 @@ const targetTime = new Date(2024, 00, 07, 17, 17);
     await popupPage.keyboard.press('Enter');
 
     //구역 선택
-    async function selectSection(grade, zone) {
+    async function selectSection(grade) {
+        await popupPage.waitForSelector("#select_seat_grade", { visible: true });
         const gradeSelector = `#select_seat_grade > li:nth-child(${grade})`;
-        const zoneSelector = `${gradeSelector} > .seat_zone li:nth-child(${zone})`;
+        const zoneSelector = `${gradeSelector} > .seat_zone li:first-child`;
 
-        await clickAfterRender(popupPage, gradeSelector);
-        await clickAfterRender(popupPage, zoneSelector);
+        const result = await clickAfterRender(popupPage, gradeSelector);
+        if (result) {
+            return await clickAfterRender(popupPage, zoneSelector);
+        } else {
+            return await selectSection(grade);
+        }
     }
-    await selectSection(4, 4);
+    //전체가 첫 번째임 무조건 2부터
+    const result = await selectSection(6);
+    if (!result) await selectSection(6);
+
+    //경고 팝업 나올 경우 대비
+    await popupPage.keyboard.press('Enter');
 
     //좌석 선택
     const mapSelector = "#main_view_top > #main_view > canvas:last-child";
@@ -79,20 +87,28 @@ const targetTime = new Date(2024, 00, 07, 17, 17);
             return { top, left, width, height };
         }, map);
 
-
         async function selectSeat(rect) {
-            for (let i = rect.left + rect.width / 4; i < rect.width; i+=10) {
-                for (let j = rect.top + rect.height / 2; j < rect.height; j+=10) {
-                    await popupPage.mouse.click(i, j);
-                    //선택 완료
-                    const seat = await popupPage.$('.reserve_right > .reserve_btn > .btn.btn_full');
-                    if (seat) return;
+            try {
+                for (let i = rect.left + rect.width / 4; i < rect.width - 10; i+=10) {
+                    for (let j = rect.top + rect.height / 10; j < rect.height - 10; j+=10) {
+                        await popupPage.mouse.click(i, j);
+                        //선택 완료
+                        const seat = await popupPage.$('.reserve_right > .reserve_btn > .btn.btn_full');
+                        if (seat) return;
+                    }
                 }
+            } catch (error) {
+                console.log("seat", error);
             }
         }
         await selectSeat(rect);
 
-        //다음 단계 이동
-        // await popupPage.click('.reserve_right > .reserve_btn > .btn.btn_full');
+        // 다음 단계 이동
+        try {
+            await popupPage.click('.reserve_right > .reserve_btn > .btn.btn_full');
+        } catch (error) {
+            console.log("click", error);
+            await selectSeat(rect);
+        }
     }
 })();
