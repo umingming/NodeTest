@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 //시간 지정(month - 1)
-const targetTime = new Date(2024, 00, 07, 23, 25);
+const targetTime = new Date(2024, 0, 8, 15, 0, 21.9);
 
 (async () => {
     const browser = await puppeteer.launch({headless: false});
@@ -39,7 +39,7 @@ const targetTime = new Date(2024, 00, 07, 23, 25);
     new Promise(() => setTimeout(async () => await clickAfterRender(page, ticketBtn), remainingTime));
     
     //리스트에서 몇 번째 경기인지 선택
-    const popupBtn = ".reserve-list li:nth-child(8) button";
+    const popupBtn = ".reserve-list li:nth-child(6) button";
     await clickAfterRender(page, popupBtn);
     
     //popUp 페이지
@@ -69,8 +69,8 @@ const targetTime = new Date(2024, 00, 07, 23, 25);
         }
     }
     //전체가 첫 번째임 무조건 2부터
-    const result = await selectSection(6);
-    if (!result) await selectSection(6);
+    const result = await selectSection(2);
+    if (!result) await selectSection(2);
 
     //경고 팝업 나올 경우 대비
     await popupPage.keyboard.press('Enter');
