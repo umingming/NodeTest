@@ -11,10 +11,10 @@ router.post(
     passport.authenticate("local", {
         //로그인 실패하면 이 경로로 이동시켜줘
         failureFlash: true,
-        failureRedirect: "/fail",
     }),
     (req, resp) => {
-        resp.redirect("/");
+        console.log(req);
+        resp.status(200).send({ message: "로그인" });
     }
 );
 module.exports = router;

@@ -2,9 +2,12 @@ const express = require("express");
 const app = express();
 //HTML 데이터를 해석할 수 있음.
 const methodOverride = require("method-override");
+const cors = require("cors");
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(methodOverride("_method"));
 app.set("view engine", "ejs");
+app.use(cors());
 require("dotenv").config();
 
 const MongoClient = require("mongodb").MongoClient;
@@ -16,7 +19,7 @@ MongoClient.connect(process.env.DB_URL, function (err, client) {
     console.log("Connected to database");
 
     const loginRouter = require("./routes/login");
-    app.use("/", loginRouter);
+    app.use("/api", loginRouter);
 
     app.listen(process.env.PORT, () => {
         console.log("Server is running on port", process.env.PORT);
@@ -83,6 +86,7 @@ app.post("/edit/:id", function (req, res) {
         }
     );
 });
+
 app.put("/edit/:id", (req, res) => {
     console.log(req);
     db.collection("post").updateOne(
@@ -136,6 +140,7 @@ passport.use(
             passReqToCallback: false,
         },
         (id, pw, done) => {
+            console.log(id, pw);
             db.collection("login").findOne({ id: id }, (err, result) => {
                 if (err) return done(err);
 
