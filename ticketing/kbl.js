@@ -1,14 +1,16 @@
 const puppeteer = require('puppeteer');
 //시간 지정(month - 1)
 const targetTime = new Date(2024, 0, 8, 15, 0, 21.9);
+const id = "";
+const password = "";
 
 (async () => {
     const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
     //로그인
     await page.goto('https://www.kbl.or.kr/auth/login');
-    await page.type(".login-box .box li input[type='email']", 'u_0112@naver.com');
-    await page.type(".login-box .box li input[type='password']", 'tndnjseo13!');
+    await page.type(".login-box .box li input[type='email']", id);
+    await page.type(".login-box .box li input[type='password']", password);
     await page.keyboard.press('Enter');
 
     /**
