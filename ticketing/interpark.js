@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 //시간 지정(month - 1)
-const targetTime = new Date(2024, 3, 6, 13, 55, 21.9);
+const targetTime = new Date(2024, 3, 8, 9, 49, 21.9);
 const id = "o0o5193";
 const password = "tndnjseo13!";
 
@@ -24,7 +24,15 @@ async function clickAfterRender(targetPage, selector) {
         console.log(selector, error);
         return false;
     }
-} 
+}
+
+/**
+ * @returns {Promise<Object>}
+ */
+function waitLogin() {
+    const remainingTime = Math.max(targetTime.getTime() - Date.now(), 1000); 
+    return new Promise(resolve => setTimeout(resolve, remainingTime));
+}
 
 (async () => {
     const browser = await puppeteer.launch({headless: false});
@@ -44,11 +52,10 @@ async function clickAfterRender(targetPage, selector) {
     await page.type("#userId", id);
     await page.type("#userPwd", password);
 
-    const remainingTime = Math.max(targetTime.getTime() - Date.now(), 1000); 
-    new Promise(() => setTimeout(async () => await page.keyboard.press('Enter'), remainingTime))
-        .then(async () => {
-             // 예매하기
-            const reserveBtn = ".sideBtn.is-primary"
-            await clickAfterRender(page, reserveBtn);
-        });
+    await waitLogin();
+    await page.keyboard.press('Enter');
+
+    // 예매하기
+    const reserveBtn = ".sideBtn.is-primary"
+    await clickAfterRender(page, reserveBtn);
 })();
