@@ -1,8 +1,6 @@
 const puppeteer = require('puppeteer');
 //시간 지정(month - 1)
-const targetTime = new Date(2024, 3, 8, 9, 49, 21.9);
-const id = "o0o5193";
-const password = "tndnjseo13!";
+const targetTime = new Date(2024, 5, 27, 13, 59, 55);
 
 /**
  * @param {puppeteer.Page} targetPage 
@@ -39,9 +37,10 @@ function waitLogin() {
     const page = await browser.newPage();
     
     // 팝업 무시
-    await page.goto('https://tickets.interpark.com/goods/24003992');
-    // const popupCloseBtn = ".popupFooter > .popupCheck"
-    // await clickAfterRender(page, popupCloseBtn);
+    await page.goto('https://ticket.interpark.com/Contents/Sports/GoodsInfo?SportsCode=07001&TeamCode=PB026');
+    const popupCloseBtn = ".popupInput > .btnClose"
+    const popupCloseBtn2 = "#div_checkDontsee_PT002_12_2 .popupInput > .btnClose"
+    await clickAfterRender(page, popupCloseBtn);
 
     // 로그인 이동
     const loginBtn = ".Ticket_Account.header_userMenu__c408a a:first-child"
@@ -54,8 +53,12 @@ function waitLogin() {
 
     await waitLogin();
     await page.keyboard.press('Enter');
-
+    
+    // 팝업 무시
+    await clickAfterRender(page, popupCloseBtn);
+    await clickAfterRender(page, popupCloseBtn2);
+    
     // 예매하기
-    const reserveBtn = ".sideBtn.is-primary"
+    const reserveBtn = ".timeSchedule:nth-child(2) > div:last-child"
     await clickAfterRender(page, reserveBtn);
 })();
