@@ -75,6 +75,7 @@ app.get("/edit/:id", (req, res) => {
     });
 });
 
+// Post로 편집하기
 app.post("/edit/:id", function (req, res) {
     console.log(req);
     db.collection("post").updateOne(
